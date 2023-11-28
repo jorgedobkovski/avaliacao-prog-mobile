@@ -12,7 +12,7 @@ class MoneyView extends StatefulWidget {
 
 class _MoneyViewState extends State<MoneyView> {
   final List<String> _currencies = ['USD', 'EUR', 'BRL', 'JPY', 'CAD'];
-  String _selectedCurrency = 'USD';
+  String _selectedCurrency = 'BRL';
   Map<String, dynamic>? _exchangeRates;
   double _amount = 0.0;
 
@@ -65,7 +65,7 @@ class _MoneyViewState extends State<MoneyView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Conversor de moedas'),
+        title: Text('Cambio de moedas'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -73,7 +73,7 @@ class _MoneyViewState extends State<MoneyView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Digite o valor na moeda base:',
+              'Digite um valor:',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),

@@ -9,7 +9,7 @@ class WeatherWidget extends StatelessWidget {
   Widget build(BuildContext context) {
 
     final local = weather['name'];
-    final temperatura = (weather['main']['temp'] - 273.15); // Kelvin para Celsius
+    final temperatura = (weather['main']['temp']-273.15);
     final clima = weather['weather'][0]['description'];
 
 

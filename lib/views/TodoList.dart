@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'models/todoItem.dart';
 
 class TodoListView extends StatefulWidget {
   const TodoListView({super.key});
@@ -6,39 +11,35 @@ class TodoListView extends StatefulWidget {
   @override
   State<TodoListView> createState() => _TodoListViewState();
 }
-
-class ToDo {
-  String title;
-  bool isDone;
-
-  ToDo({
-    required this.title,
-    this.isDone = false,
-  });
-}
-
 class _TodoListViewState extends State<TodoListView> {
-  List<ToDo> todos = [];
+  List<ToDo> _todos = [
+    ToDo(task: 'Ouvir o novo album do Angra', isDone: false),
+    ToDo(task: 'Fazer prova de Programação Mobile', isDone: true),
+    ToDo(task: 'Lavar a louça', isDone: true),
+  ];
 
   TextEditingController _addTaskController = TextEditingController();
   TextEditingController _editTaskController = TextEditingController();
   String _searchQuery = '';
+  bool _showSearchBar = false;
 
   void _addTodo(String title) {
     setState(() {
-      todos.add(ToDo(title: title));
+      _todos.add(ToDo(task: title));
     });
+    _saveData();
     Navigator.of(context).pop();
   }
 
   void _toggleTodoState(int index) {
     setState(() {
-      todos[index].isDone = !todos[index].isDone;
+      _todos[index].isDone = !_todos[index].isDone;
     });
+    _saveData();
   }
 
   void _showEditModal(int index) {
-    _editTaskController.text = todos[index].title;
+    _editTaskController.text = _todos[index].task;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -46,7 +47,7 @@ class _TodoListViewState extends State<TodoListView> {
           title: Text('Editar Tarefa'),
           content: TextField(
             controller: _editTaskController,
-            decoration: InputDecoration(hintText: 'Digite o título da tarefa'),
+            decoration: InputDecoration(hintText: 'Digite uma tarefa'),
           ),
           actions: <Widget>[
             TextButton(
@@ -58,9 +59,10 @@ class _TodoListViewState extends State<TodoListView> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  todos[index].title = _editTaskController.text;
+                  _todos[index].task = _editTaskController.text;
                 });
                 _editTaskController.clear();
+                _saveData();
                 Navigator.of(context).pop();
               },
               child: Text('Salvar'),
@@ -72,7 +74,7 @@ class _TodoListViewState extends State<TodoListView> {
   }
 
   void _removeTodo(int index) {
-    final removedItem = todos.removeAt(index);
+    final removedItem = _todos.removeAt(index);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Tarefa removida'),
@@ -80,12 +82,13 @@ class _TodoListViewState extends State<TodoListView> {
           label: 'Desfazer',
           onPressed: () {
             setState(() {
-              if (index <= todos.length) {
-                todos.insert(index, removedItem);
+              if (index <= _todos.length) {
+                _todos.insert(index, removedItem);
               } else {
-                todos.add(removedItem);
+                _todos.add(removedItem);
               }
             });
+            _saveData();
           },
         ),
       ),
@@ -94,48 +97,79 @@ class _TodoListViewState extends State<TodoListView> {
 
   List<ToDo> _filteredTodos() {
     if (_searchQuery.isEmpty) {
-      return todos;
+      return _todos;
+    } else if (_searchQuery.startsWith('[true]')) {
+      return _todos.where((todo) => todo.isDone).toList();
+    } else if (_searchQuery.startsWith('[false]')) {
+      return _todos.where((todo) => !todo.isDone).toList();
     } else {
-      return todos.where((todo) =>
-          todo.title.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+      return _todos
+          .where((todo) =>
+              todo.task.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
     }
   }
 
+  Future<void> _loadData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? todosString = prefs.getString('todos');
+
+    if (todosString != null) {
+      final List<dynamic> decoded = jsonDecode(todosString);
+      setState(() {
+        _todos = decoded.map((item) => ToDo.fromMap(item)).toList();
+      });
+    }
+  }
+
+  Future<void> _saveData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encoded = jsonEncode(_todos.map((todo) => todo.toMap()).toList());
+    prefs.setString('todos', encoded);
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _loadData();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('TO-DO'),
         actions: <Widget>[
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            child: SizedBox(
-              width: 210,
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Buscar tarefa',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
+          if (_showSearchBar)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              child: SizedBox(
+                width: 210,
+                child: TextField(
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Buscar tarefa',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 12.0,
+                      horizontal: 16.0,
+                    ),
+                    suffixIcon: Icon(
+                      Icons.search,
+                      color: Colors.purple,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 12.0,
-                    horizontal: 16.0,
-                  ),
-                  suffixIcon: Icon(
-                    Icons.search,
-                    color: Colors.purple,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
                 ),
               ),
             ),
-          ),
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () {
@@ -146,7 +180,8 @@ class _TodoListViewState extends State<TodoListView> {
                     title: Text('Adicionar task'),
                     content: TextField(
                       controller: _addTaskController,
-                      decoration: InputDecoration(hintText: 'Digite uma tarefa'),
+                      decoration:
+                      InputDecoration(hintText: 'Digite uma tarefa'),
                     ),
                     actions: <Widget>[
                       TextButton(
@@ -168,6 +203,14 @@ class _TodoListViewState extends State<TodoListView> {
               );
             },
           ),
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              setState(() {
+                _showSearchBar = !_showSearchBar;
+              });
+            },
+          ),
         ],
       ),
       body: Column(
@@ -178,13 +221,13 @@ class _TodoListViewState extends State<TodoListView> {
               itemBuilder: (BuildContext context, int index) {
                 final filteredList = _filteredTodos();
                 return Dismissible(
-                    key: Key(todos[index].title),
+                    key: UniqueKey(),
                     direction: DismissDirection.horizontal,
-                    onDismissed: (direction){
-                      if(direction == DismissDirection.startToEnd){
+                    onDismissed: (direction) {
+                      if (direction == DismissDirection.startToEnd) {
                         _removeTodo(index);
                       }
-                      if(direction == DismissDirection.endToStart){
+                      if (direction == DismissDirection.endToStart) {
                         _showEditModal(index);
                       }
                     },
@@ -192,18 +235,17 @@ class _TodoListViewState extends State<TodoListView> {
                       onTap: () => _toggleTodoState(index),
                       child: ListTile(
                         title: Text(
-                          filteredList[index].title,
+                          filteredList[index].task,
                           style: TextStyle(
                             decoration: filteredList[index].isDone ? TextDecoration.lineThrough : null,
                           ),
                         ),
                         leading: Checkbox(
-                          value: todos[index].isDone,
+                          value: filteredList[index].isDone,
                           onChanged: (_) => _toggleTodoState(index),
                         ),
                       ),
-                    )
-                );
+                    ));
               },
             ),
           ),

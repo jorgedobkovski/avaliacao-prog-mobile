@@ -30,67 +30,48 @@ class _WeatherViewState extends State<WeatherView> {
     }
   }
 
-  Future<void> _modalSelectLocation(BuildContext context) async {
-    String newLocation = await showModalBottomSheet(
+  Future<void> _modalSelectLocationM(BuildContext context) async {
+    String newLocation = await showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            ListTile(
-              title: Text('Manaus'),
-              onTap: () {
-                Navigator.pop(context, 'Manaus');
-              },
-            ),
-            ListTile(
-              title: Text('Sao Luis'),
-              onTap: () {
-                Navigator.pop(context, 'Sao Luis');
-              },
-            ),
-            ListTile(
-              title: Text('Sao Paulo'),
-              onTap: () {
-                Navigator.pop(context, 'Sao Paulo');
-              },
-            ),
-            ListTile(
-              title: Text('Curitiba'),
-              onTap: () {
-                Navigator.pop(context, 'Curitiba');
-              },
-            ),
-            ListTile(
-              title: Text('Porto Velho'),
-              onTap: () {
-                Navigator.pop(context, 'Porto Velho');
-              },
-            ),
-            ListTile(
-              title: Text('Cuzco'),
-              onTap: () {
-                Navigator.pop(context, 'Cuzco');
-              },
-            ),
-            ListTile(
-              title: Text('Guajará-Mirim'),
-              onTap: () {
-                Navigator.pop(context, 'Guajara mirim');
-              },
-            ),
-            ListTile(
-              title: Text('Caracas'),
-              onTap: () {
-                Navigator.pop(context, 'Caracas');
-              },
-            ),
-            // Add more locations as needed
-          ],
+        return AlertDialog(
+          title: Text('Selecione uma cidade'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              DropdownButton<String>(
+                hint: Text('Escolha uma cidade'),
+                items: <String>[
+                  'Manaus',
+                  'Sao Luis',
+                  'Sao Paulo',
+                  'Curitiba',
+                  'Porto Velho',
+                  'Cuzco',
+                  'Guajara mirim',
+                  'Caracas',
+                ].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  print('Cidade selecionada: $newValue');
+                  Navigator.pop(context, newValue);
+                },
+              ),
+              ElevatedButton(
+                  onPressed: (){
+                    Navigator.pop(context);
+                  },
+                  child: Text("Cancelar"),
+              ),
+            ],
+          ),
         );
       },
     );
-
     if (newLocation != null && newLocation != _selectedLocation) {
       setState(() {
         _selectedLocation = newLocation;
@@ -98,6 +79,7 @@ class _WeatherViewState extends State<WeatherView> {
       await _getWeatherData(_selectedLocation);
     }
   }
+
 
   @override
   void initState() {
@@ -114,17 +96,13 @@ class _WeatherViewState extends State<WeatherView> {
           IconButton(
             icon: Icon(Icons.search),
             onPressed: () async {
-              await _modalSelectLocation(context);
+              await _modalSelectLocationM(context);
             },
           ),
         ],
       ),
       body: Center(
-        child: _weather != null
-            ? Container(
-                child: WeatherWidget(weather: _weather!),
-            )
-            : CircularProgressIndicator(),
+        child: _weather != null ? Container(child: WeatherWidget(weather: _weather!)) : CircularProgressIndicator(),
       ),
     );
   }
