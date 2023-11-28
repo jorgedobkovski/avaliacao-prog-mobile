@@ -12,11 +12,7 @@ class TodoListView extends StatefulWidget {
   State<TodoListView> createState() => _TodoListViewState();
 }
 class _TodoListViewState extends State<TodoListView> {
-  List<ToDo> _todos = [
-    ToDo(task: 'Ouvir o novo album do Angra', isDone: false),
-    ToDo(task: 'Fazer prova de Programação Mobile', isDone: true),
-    ToDo(task: 'Lavar a louça', isDone: true),
-  ];
+  List<ToDo> _todos = [];
 
   TextEditingController _addTaskController = TextEditingController();
   TextEditingController _editTaskController = TextEditingController();
