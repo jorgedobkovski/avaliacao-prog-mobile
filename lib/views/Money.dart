@@ -11,7 +11,7 @@ class MoneyView extends StatefulWidget {
 }
 
 class _MoneyViewState extends State<MoneyView> {
-  final List<String> _currencies = ['USD', 'EUR', 'GBP', 'JPY', 'CAD'];
+  final List<String> _currencies = ['USD', 'EUR', 'BRL', 'JPY', 'CAD'];
   String _selectedCurrency = 'USD';
   Map<String, dynamic>? _exchangeRates;
   double _amount = 0.0;
