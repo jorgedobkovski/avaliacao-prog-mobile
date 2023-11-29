@@ -22,16 +22,16 @@ class _TodoListViewState extends State<TodoListView> {
   void _addTodo(String title) {
     setState(() {
       _todos.add(ToDo(task: title));
+      _saveData();
     });
-    _saveData();
     Navigator.of(context).pop();
   }
 
   void _toggleTodoState(int index) {
     setState(() {
       _todos[index].isDone = !_todos[index].isDone;
+      _saveData();
     });
-    _saveData();
   }
 
   void _showEditModal(int index) {
@@ -69,21 +69,21 @@ class _TodoListViewState extends State<TodoListView> {
     );
   }
 
-  void _removeTodo(int index) {
+  Future<void> _removeTask(int index) async {
     final removedItem = _todos.removeAt(index);
+    await _saveData();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Tarefa removida'),
         action: SnackBarAction(
           label: 'Desfazer',
           onPressed: () {
-            setState(() {
-              if (index <= _todos.length) {
-                _todos.insert(index, removedItem);
-              } else {
-                _todos.add(removedItem);
-              }
-            });
+            if (index <= _todos.length) {
+              _todos.insert(index, removedItem);
+            } else {
+              _todos.add(removedItem);
+            }
+            setState(() {});
             _saveData();
           },
         ),
@@ -219,9 +219,9 @@ class _TodoListViewState extends State<TodoListView> {
                 return Dismissible(
                     key: UniqueKey(),
                     direction: DismissDirection.horizontal,
-                    onDismissed: (direction) {
+                    onDismissed: (direction) async {
                       if (direction == DismissDirection.startToEnd) {
-                        _removeTodo(index);
+                        await _removeTask(index);
                       }
                       if (direction == DismissDirection.endToStart) {
                         _showEditModal(index);
